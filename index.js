@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 const port = 3000
 // route, arrow function
-app.get('/tin-tuc', (req, res) => {
+app.get('/', (req, res) => {
     var a = 1;
     var b = 2;
 
