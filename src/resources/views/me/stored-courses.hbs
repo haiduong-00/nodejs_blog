@@ -1,15 +1,37 @@
-<div class="mt-4">
+<form class="mt-4" name="container-form" method="POST" action="/courses/handle-form-actions-delete">
     <div>
       <h3>Khóa học của tôi</h3>
       <a href="/me/trash/courses">Thùng rác {{deletedCount}}</a>
+
+      <div class="mt-4 d-flex align-items-center">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="checkbox-all">
+          <label class="form-check-label" for="checkbox-all">
+            Chọn tất cả
+          </label>
+        </div>
+
+        <select class="form-control form-control-sm checkbox-select-all-options" name="action" required> 
+          {{!-- action = gia tri value --}}
+          <option value="">-- Chọn hành động --</option>
+          <option value="delete">Xóa</option>
+        </select>
+
+        <button class="btn btn-primary btn-sm check-all-submit-btn disabled">Thực hiện</button>
+      </div>
     </div>
 
 
     <table class="table mt-4">
         <thead>
             <tr>
-                <th scope="col">#</th>
-                <th scope="col">Tên khóa học</th>
+                <th scope="col" colspan="2">#</th>
+                <th scope="col">
+                  Tên khóa học
+                  <a href="">
+                    <span class="oi oi-elevator"></span>
+                  </a>
+                </th>
                 <th scope="col">Trình độ</th>
                 <th scope="col" colspan="2">Thời gian tạo</th>
                 {{!-- <th scope="col">Thời gian tạo</th> --}}
@@ -18,6 +40,11 @@
         <tbody>
             {{#each courses}}
             <tr>
+              <td>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="courseIds[]" value="{{this._id}}" >
+                </div>
+              </td>
                 <th scope="row">{{sum @index 1}}</th>
                 <td>{{this.name}}</td>
                 <td>{{this.level}}</td>
@@ -38,7 +65,7 @@
             {{/each}}
         </tbody>
     </table>
-</div>
+</form>
 
 {{!-- Confirm delete courses --}}
 <div id="delete-course-modal" class="modal" tabindex="-1" role="dialog">
@@ -69,7 +96,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         var courseId;
         var deleteForm = document.forms['delete-course-form'];
-        var btnDeleteCourse = document.getElementById('btn-delete-course');
+        var btnDeleteCourse = document.getElementById('btn-delete-course');   // su dung Javascript
+        var checkboxAll = $('#checkbox-all')        // su dung Jquery
+        var courseItemCheckbox = $('input[name="courseIds[]"]')
+        var checkAllSubmitBtn = $('.check-all-submit-btn')
+        // var containerForm = document.forms['container-form']
+        var containerForm = $('form[name="container-form"]')
+
+        console.log(containerForm)
 
         // When dialog confirm clicked
         $('#delete-course-modal').on('show.bs.modal', function (event) {
@@ -81,6 +115,43 @@
         btnDeleteCourse.onclick = function() {
           deleteForm.action = '/courses/' + courseId + '?_method=DELETE';
           deleteForm.submit();
+        }
+
+        // Checkbox all clicked using Jquery
+        checkboxAll.change(function() {
+          var isCheckedAll = $(this).prop('checked');     // isCheckedAll return true or false
+          courseItemCheckbox.prop('checked', isCheckedAll);
+          renderCheckAllSubmitBtn();
+        })
+
+        // Course item checkbox changed
+        courseItemCheckbox.change(function() {
+          var isChecked = courseItemCheckbox.length === $('input[name="courseIds[]"]:checked').length;  // isCheckedAll return true or false if 
+          checkboxAll.prop('checked', isChecked);
+          renderCheckAllSubmitBtn();
+        })
+
+        // Check all submit button clicked
+        // C1: addClass disabled  -> nó sẽ ko reload trang nhưng vãn ấn được, chưa triệt để
+        
+          // Lang nghe button `Thuc hien` , kiem tra xem form da check hay chua?
+          // Lang nghe su kien submit dien ra nghia la de trinh duyet no thuc thi, neu dien ra kiem tra form co du dieu kien submit ko? If not: e.preventDefault()
+        containerForm.on('submit', function(event) {
+          var isSubmitable = !checkAllSubmitBtn.hasClass('disabled');
+          if(!isSubmitable) {
+            event.preventDefault();             // loai bo hanh vi mac dinh cua form
+          }
+        })
+
+        // Re-render check all submit buttons
+        function renderCheckAllSubmitBtn() {
+          var checkedCount = $('input[name="courseIds[]"]:checked').length;
+          if (checkedCount > 0) {
+            checkAllSubmitBtn.removeClass('disabled');
+          }
+          else {
+            checkAllSubmitBtn.addClass('disabled');
+          }
         }
     })
 
