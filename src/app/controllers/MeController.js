@@ -3,8 +3,16 @@ const Course = require('../models/Course')
 class MeController {
     // [GET] /me/stored/courses
     storedCourses(req, res, next) {
+        let courseQuery = Course.find({}).lean();
 
-        Promise.all([Course.find({}).lean(), Course.countDocumentsDeleted({}).lean()])
+        if(req.query.hasOwnProperty('_sort')) {
+            const isValidtype = ['asc', 'desc'].includes(req.query.type);
+            courseQuery = courseQuery.sort({ 
+                [req.query.column]: isValidtype ? req.query.type : 'desc'
+             })
+        }
+
+        Promise.all([courseQuery, Course.countDocumentsDeleted({}).lean()])
             .then(([courses, deletedCount]) => 
                 res.render('me/stored-courses', {
                     courses, 
